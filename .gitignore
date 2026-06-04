@@ -2,10 +2,6 @@
 .pixi/*
 !.pixi/config.toml
 
-# Generated data (reproducible via `pixi run gen-data`)
-data/images/
-data/sample.csv
-
 # Python
 __pycache__/
 *.py[cod]
