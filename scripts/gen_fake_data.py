@@ -57,8 +57,7 @@ def main():
     idx = 0
     for dominant, n, mean in GROUPS:
         for _ in range(n):
-            img_name = f"image_{idx:04d}.png"
-            img_path = IMAGES_DIR / img_name
+            img_path = IMAGES_DIR / f"image_{idx:04d}.png"
             make_placeholder(img_path, f"img {idx}")
             scores = make_scores(dominant, mean, DOMINANT_STD)
             row = {"image_path": str(img_path.resolve()), "gt": dominant}

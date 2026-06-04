@@ -2,8 +2,7 @@ import pandas as pd
 
 
 def load_dataframe(csv_path: str) -> pd.DataFrame:
-    df = pd.read_csv(csv_path)
-    return df
+    return pd.read_csv(csv_path)
 
 
 def discover_categories(df: pd.DataFrame) -> list[str]:
@@ -23,8 +22,7 @@ def get_category_records(df: pd.DataFrame, category: str) -> list[dict]:
 
 
 def get_distribution(df: pd.DataFrame, category: str) -> dict:
-    records = get_category_records(df, category)
-    scores = [r["score"] for r in records]
+    scores = [r["score"] for r in get_category_records(df, category)]
     return {
         "scores": scores,
         "min": min(scores) if scores else 0.0,
@@ -35,7 +33,7 @@ def get_distribution(df: pd.DataFrame, category: str) -> dict:
 def get_images_around(records: list[dict], score: float, window: int = 10) -> list[dict]:
     if not records:
         return []
-    # find index of closest score
+    # find index of the record whose score is closest to the selected value
     closest_idx = min(range(len(records)), key=lambda i: abs(records[i]["score"] - score))
     start = max(0, closest_idx - window)
     end = min(len(records), closest_idx + window + 1)
