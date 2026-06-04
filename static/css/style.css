@@ -1,0 +1,159 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  background: #f5f5f5;
+  color: #222;
+  height: 100vh;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ── Sidebar ─────────────────────────────── */
+#sidebar {
+  width: 200px;
+  min-width: 160px;
+  background: #1e1e2e;
+  color: #cdd6f4;
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#sidebar h2 {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #89b4fa;
+}
+
+#category-select {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #45475a;
+  background: #313244;
+  color: #cdd6f4;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+/* ── Main area ───────────────────────────── */
+#main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px;
+  gap: 12px;
+}
+
+/* Panel-1: histogram + slider */
+#panel1 {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  padding: 12px;
+  flex: 0 0 auto;
+}
+
+#histogram {
+  width: 100%;
+  height: 260px;
+}
+
+#slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+#score-slider {
+  flex: 1;
+  accent-color: #89b4fa;
+  cursor: pointer;
+}
+
+#slider-label {
+  font-size: 0.85rem;
+  min-width: 48px;
+  text-align: right;
+  color: #555;
+}
+
+/* Panel-2: image strip */
+#panel2 {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  padding: 12px;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#panel2 h3 {
+  font-size: 0.85rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+#image-strip {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  min-height: 360px;
+  align-items: flex-start;
+}
+
+.img-card {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f8f8f8;
+  border-radius: 6px;
+  padding: 8px;
+  border: 1px solid #e0e0e0;
+  width: 160px;
+}
+
+.img-card img {
+  width: 140px;
+  height: 320px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: #eee;
+}
+
+.img-card .img-name {
+  font-size: 0.7rem;
+  margin-top: 4px;
+  color: #555;
+  word-break: break-all;
+  text-align: center;
+}
+
+.img-card .img-score {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #89b4fa;
+  margin-top: 2px;
+}
+
+#empty-msg {
+  color: #aaa;
+  font-size: 0.9rem;
+  margin: auto;
+}

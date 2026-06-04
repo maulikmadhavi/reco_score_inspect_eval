@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//mnt/d/dev_repos/**)",
+      "Bash(pixi install *)",
+      "Bash(pixi run *)",
+      "PowerShell(wsl -e bash -c \"cd /mnt/d/dev_repos/dev_ir_result_analysis && pixi run gen-data 2>&1; echo EXIT:$?\")",
+      "PowerShell(wsl -e bash -c \"echo $HOME; ls -la $HOME/.pixi/bin/pixi 2>/dev/null || echo 'not at ~/.pixi/bin'; find /home -name pixi 2>/dev/null | head -5\")",
+      "PowerShell(wsl -u maulik -e bash -c \"/home/maulik/.pixi/bin/pixi run gen-data 2>&1; echo EXIT:$?\" -- --workdir /mnt/d/dev_repos/dev_ir_result_analysis)",
+      "PowerShell(wsl -u maulik -e bash -c \"/home/maulik/.pixi/bin/pixi run test 2>&1\" -- --workdir /mnt/d/dev_repos/dev_ir_result_analysis)",
+      "PowerShell(wsl -u maulik -e bash -c \"/home/maulik/.pixi/bin/pixi run gen-data 2>&1 && /home/maulik/.pixi/bin/pixi run test 2>&1\" -- --workdir /mnt/d/dev_repos/dev_ir_result_analysis)",
+      "PowerShell(wsl -u maulik -e bash -c \"/home/maulik/.pixi/bin/pixi run gen-data 2>&1 && head -3 /mnt/d/dev_repos/dev_ir_result_analysis/data/sample.csv\" -- --workdir /mnt/d/dev_repos/dev_ir_result_analysis)",
+      "PowerShell(wsl -u maulik -e bash -c \"/home/maulik/.pixi/bin/pixi run gen-data\" -- --workdir /mnt/d/dev_repos/dev_ir_result_analysis)",
+      "PowerShell(wsl -u maulik -e bash -c \"/home/maulik/.pixi/bin/pixi run -e default python3.14 scripts/check_stats.py\" -- --workdir /mnt/d/dev_repos/dev_ir_result_analysis)",
+      "PowerShell(wsl -u maulik -e bash -c \"/home/maulik/.pixi/bin/pixi run test\" -- --workdir /mnt/d/dev_repos/dev_ir_result_analysis)",
+      "PowerShell(wsl -u maulik -e bash -c \"/home/maulik/.pixi/bin/pixi run gen-data && /home/maulik/.pixi/bin/pixi run test\" -- --workdir /mnt/d/dev_repos/dev_ir_result_analysis)"
+    ]
+  }
+}

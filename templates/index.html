@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IR Result Analysis</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside id="sidebar">
+    <h2>Category</h2>
+    <select id="category-select"></select>
+  </aside>
+
+  <!-- Main panels -->
+  <div id="main">
+
+    <!-- Panel-1: histogram + slider -->
+    <div id="panel1">
+      <div id="histogram"></div>
+      <div id="slider-row">
+        <input id="score-slider" type="range" min="0" max="1" step="0.005" value="0.5" />
+        <span id="slider-label">0.500</span>
+      </div>
+    </div>
+
+    <!-- Panel-2: image strip -->
+    <div id="panel2">
+      <h3>Images near selected score</h3>
+      <div id="image-strip">
+        <span id="empty-msg">Select a category to begin.</span>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
