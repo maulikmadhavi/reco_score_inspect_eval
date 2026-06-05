@@ -25,14 +25,13 @@ def _load_data(csv_path: str) -> None:
     _categories = data_utils.discover_categories(_df)
 
     if not _categories:
-        print("Error: no valid score_/image_ column pairs found in CSV.", file=sys.stderr)
+        print("Error: no score_<category> columns found in CSV.", file=sys.stderr)
         sys.exit(1)
 
-    # build allow-list of image paths so /image can't serve arbitrary files
-    for cat in _categories:
-        records = data_utils.get_category_records(_df, cat)
-        for r in records:
-            _known_image_paths.add(str(Path(r["image"]).resolve()))
+    # build allow-list of every image path in the CSV so /image can't serve
+    # arbitrary files (covers BG / mispredicted rows, not just per-category)
+    for image_path in _df["image_path"].dropna():
+        _known_image_paths.add(str(Path(image_path).resolve()))
 
     print(f"Loaded {len(_df)} rows, categories: {_categories}")
 
@@ -71,6 +70,30 @@ def api_images():
     images = data_utils.get_images_around(records, score, window)
     # replace full path with a URL-safe reference
     result = [{"name": Path(r["image"]).name, "score": r["score"], "path": r["image"]} for r in images]
+    return jsonify({"images": result})
+
+
+@app.route("/confusion")
+def confusion():
+    return render_template("confusion.html")
+
+
+@app.route("/api/confusion")
+def api_confusion():
+    return jsonify(data_utils.get_confusion_matrix(_df, _categories))
+
+
+@app.route("/api/confusion/cell")
+def api_confusion_cell():
+    gt = request.args.get("gt", "")
+    pred = request.args.get("pred", "")
+    if pred not in _categories:
+        return jsonify({"error": "unknown pred"}), 400
+    if gt not in _categories and gt != data_utils.BG_LABEL:
+        return jsonify({"error": "unknown gt"}), 400
+
+    records = data_utils.get_cell_records(_df, gt, pred)
+    result = [{"name": Path(r["image"]).name, "score": r["score"], "path": r["image"]} for r in records]
     return jsonify({"images": result})
 
 
