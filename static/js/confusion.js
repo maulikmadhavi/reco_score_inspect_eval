@@ -12,29 +12,67 @@ async function init() {
 
 // ── Confusion matrix heatmap ──────────────────────────────────────────────────
 
+// YlGnBu colorscale as explicit RGB stops, so we can compute the actual
+// cell color and pick a contrasting text color from its brightness.
+const COLORSCALE = [
+  [0.000, [255, 255, 217]],
+  [0.125, [237, 248, 177]],
+  [0.250, [199, 233, 180]],
+  [0.375, [127, 205, 187]],
+  [0.500, [65, 182, 196]],
+  [0.625, [29, 145, 192]],
+  [0.750, [34, 94, 168]],
+  [0.875, [37, 52, 148]],
+  [1.000, [8, 29, 88]],
+];
+
+function colorAt(t) {
+  // linearly interpolate the RGB color at position t in [0, 1]
+  for (let k = 1; k < COLORSCALE.length; k++) {
+    const [p0, c0] = COLORSCALE[k - 1];
+    const [p1, c1] = COLORSCALE[k];
+    if (t <= p1) {
+      const f = (t - p0) / (p1 - p0);
+      return c0.map((c, idx) => c + f * (c1[idx] - c));
+    }
+  }
+  return COLORSCALE[COLORSCALE.length - 1][1];
+}
+
+function textColorFor(t) {
+  // perceived brightness (ITU-R BT.601); dark text on light cells, white on dark
+  const [r, g, b] = colorAt(t);
+  const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+  return brightness > 140 ? "#1e1e2e" : "#ffffff";
+}
+
 function drawMatrix(matrix) {
   const { gt_labels, pred_labels, counts } = matrix;
+  const maxCount = Math.max(1, ...counts.flat());
 
   const trace = {
     x: pred_labels,
     y: gt_labels,
     z: counts,
     type: "heatmap",
-    colorscale: "Blues",
+    colorscale: COLORSCALE.map(([p, rgb]) => [p, `rgb(${rgb.join(",")})`]),
+    zmin: 0,
+    zmax: maxCount,
     showscale: true,
     hovertemplate: "gt=%{y} &rarr; pred=%{x}<br>count=%{z}<extra></extra>",
   };
 
-  // count label drawn inside each cell
+  // count label in each cell, colored to contrast its own cell background
   const annotations = [];
   gt_labels.forEach((gt, i) => {
     pred_labels.forEach((pred, j) => {
+      const count = counts[i][j];
       annotations.push({
         x: pred,
         y: gt,
-        text: String(counts[i][j]),
+        text: String(count),
         showarrow: false,
-        font: { color: "#222", size: 13 },
+        font: { color: textColorFor(count / maxCount), size: 14 },
       });
     });
   });
