@@ -22,6 +22,13 @@ GROUPS = [
 ]
 DOMINANT_STD = 0.05  # tight Gaussian around the mean
 
+# Fraction of labeled images that are mispredicted (scores peak at a wrong
+# category) so the confusion matrix has off-diagonal cells to inspect.
+NOISE_FRAC = 0.15
+
+# Number of unlabeled (empty gt) "background" images, for the BG matrix row.
+N_BG = 40
+
 rng = np.random.default_rng(42)
 
 
@@ -55,18 +62,42 @@ def main():
 
     rows = []
     idx = 0
+
+    # Labeled images: ground truth is the group's category. For NOISE_FRAC of
+    # them, the scores peak at a different (wrong) category -> a misprediction.
     for dominant, n, mean in GROUPS:
         for _ in range(n):
             img_path = IMAGES_DIR / f"image_{idx:04d}.png"
             make_placeholder(img_path, f"img {idx}")
-            scores = make_scores(dominant, mean, DOMINANT_STD)
+
+            if rng.random() < NOISE_FRAC:
+                wrong = [c for c in CATEGORIES if c != dominant]
+                peak = str(rng.choice(wrong))
+            else:
+                peak = dominant
+            scores = make_scores(peak, mean, DOMINANT_STD)
+
             row = {"image_path": str(img_path.resolve()), "gt": dominant}
             for cat in CATEGORIES:
                 row[f"score_{cat}"] = scores[cat]
             rows.append(row)
             idx += 1
 
-    total = sum(n for _, n, _ in GROUPS)
+    # Background images: no ground-truth label (empty gt), scores peak at a
+    # random category -> these populate the BG row of the confusion matrix.
+    for _ in range(N_BG):
+        img_path = IMAGES_DIR / f"image_{idx:04d}.png"
+        make_placeholder(img_path, f"bg {idx}")
+        peak = str(rng.choice(CATEGORIES))
+        scores = make_scores(peak, 0.85, DOMINANT_STD)
+
+        row = {"image_path": str(img_path.resolve()), "gt": ""}
+        for cat in CATEGORIES:
+            row[f"score_{cat}"] = scores[cat]
+        rows.append(row)
+        idx += 1
+
+    total = sum(n for _, n, _ in GROUPS) + N_BG
     fieldnames = ["image_path", "gt"] + [f"score_{cat}" for cat in CATEGORIES]
 
     with open(CSV_PATH, "w", newline="") as f:
