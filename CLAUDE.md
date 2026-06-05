@@ -4,105 +4,74 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Flask-based web application for visualizing image recognition results. It displays:
-- **Panel-1 (Distribution)**: Histogram of recognition scores across images with a slider to select a score range
-- **Panel-2 (Image Gallery)**: Images sorted by recognition score value, corresponding to the selected score range
-- **SidePanel (Category Selector)**: Dropdown to filter results by category
+`reco_score_inspect_eval` is a Flask web app for **debugging recognition-model results**
+(image classification only). Two views, switchable from the sidebar:
 
-The application processes CSV input files containing variable score and image name columns per category (named as `score_<category>` and `image_<category>`). Score values range from 0 to 1.
+- **Score distribution** (`/`) — Plotly histogram of per-category scores with a slider;
+  Panel-2 shows images near the selected score, filtered to those whose ground truth
+  matches the category.
+- **Confusion matrix** (`/confusion`) — Plotly heatmap of ground-truth × predicted with a
+  trailing **`BG`** row for unlabeled images. Clicking a cell loads its images sorted by
+  prediction confidence (descending) — the core error-inspection workflow.
 
-## Development Setup
+Charts are **client-side Plotly** (CDN), not server-rendered. See `Readme.md` for the
+architecture diagram and full feature docs.
 
-This project uses **Pixi** for dependency management. The Python 3.14+ environment is configured in `pixi.toml`.
+## Running commands (IMPORTANT: pixi is linux-64 only)
+
+The pixi environment targets `linux-64`, so on this Windows host **everything runs through
+WSL**. `pixi` on the Windows PATH will fail with `unsupported-platform`. Use one of:
 
 ```bash
-# Install pixi (if not already installed)
-# https://pixi.sh
+# via WSL (pixi binary is not on PATH for non-login shells — use the full path)
+wsl -u maulik -e bash -c "/home/maulik/.pixi/bin/pixi run <task>" -- --workdir /mnt/d/dev_repos/dev_ir_result_analysis
 
-# Activate the pixi environment
-pixi shell
-
-# Or run commands directly with pixi
-pixi run python app.py
-
-# Add a new dependency
-pixi add <package-name>
-
-# Add a new PyPI dependency
-pixi add --pypi <package-name>
-
-# Update dependencies
-pixi update
-
-# Run the application
-pixi run python app.py
-
-# Run tests (after adding pytest to pixi.toml)
-pixi run pytest
-
-# Run a single test
-pixi run pytest tests/test_name.py::test_function -v
+# or call the env interpreter directly (faster startup, no pixi overhead)
+.pixi/envs/default/bin/python3.14 <script>.py
 ```
 
-**Python Location**: `.pixi/envs/default/bin/python3.14`
+Pixi tasks (`pixi.toml`):
 
-## Project Structure
+| Task | Command |
+|---|---|
+| `gen-data` | regenerate `data/sample.csv` + placeholder PNGs (deterministic, seed 42) |
+| `start` | `python app.py --csv data/sample.csv` |
+| `test` | `pytest tests/ -v` |
 
-```
-dev_ir_result_analysis/
-├── app.py                 # Main Flask application
-├── static/               # Static assets (CSS, JS, images)
-│   └── ...
-├── templates/            # Jinja2 templates
-│   └── index.html
-├── data/                 # Sample CSV input files
-│   └── sample.csv
-└── tests/                # Unit tests
-    └── ...
-```
+Run the app directly with flags: `python app.py --csv <path> [--host --port --debug]`.
+Run a single test: `pixi run pytest tests/test_data_utils.py::test_name -v`.
 
-## Dependencies
+## Architecture
 
-**Current (from pixi.toml)**:
-- Python 3.14.5+
-- Flask 3.1.3+
+- **`app.py`** — HTTP layer only: CLI, Flask routes, and the `/image` allow-list guard.
+  Loads the CSV once at startup into module globals (`_df`, `_categories`,
+  `_known_image_paths`). Routes delegate all logic to `data_utils`.
+- **`data_utils.py`** — pure functions, **no Flask imports**, fully unit-tested. Core
+  helpers shared by the confusion view: `normalize_gt` (empty/NaN gt → `BG`),
+  `get_predictions` (`pred` column or argmax of `score_*`), `_gt_column`.
+- **`tests/test_data_utils.py`** — 16 tests on the data layer. `conftest.py` adds the
+  project root to `sys.path` so `import data_utils` works.
+- Frontend: `templates/{index,confusion}.html`, `static/js/{app,confusion}.js`,
+  `static/css/style.css` (shared).
 
-**Recommended additions**:
-```bash
-pixi add --pypi pandas numpy pillow matplotlib pytest
-```
+## Data schema
 
-## Key Components
+Single CSV. Columns: `image_path` (full path on disk), `gt` or `gt_name` (ground truth;
+empty → `BG`), `score_<category>` (one per category, row sums to 1), and optional `pred`.
+Categories are auto-discovered from `score_`-prefixed columns. `pred`/`correct`/other
+columns are otherwise ignored. The `/image` route only serves paths present in the loaded
+CSV (arbitrary file reads → 403).
 
-- **Data Processing**: CSV parsing with pandas, category filtering, score-to-image mapping
-- **Backend**: Flask routes for category selection, slider value updates, image data retrieval
-- **Frontend**: HTML/CSS/JavaScript for interactive panels, slider control, dropdown menu
-- **Visualization**: Matplotlib for histogram generation, image gallery rendering
+## Conventions
 
-## Common Tasks
+- **Readability over compaction.** Prefer clear, explicit code over dense one-liners —
+  e.g. keep step-by-step `sub = ...` pandas reassignments rather than long method chains;
+  avoid `**{...}` dict-unpacking and inline slice expressions that hide named variables.
+- `data/images/*.png` are tracked via **Git LFS**; `data/sample.csv` is a normal file.
+  Both are regenerable via `pixi run gen-data`, so don't hand-edit them.
+- Commit style: Conventional Commits (`feat(confusion):`, `fix:`, `docs:`, `test:`).
 
-### Add a new category
-1. Input CSV should contain `score_<category>` and `image_<category>` columns
-2. Application auto-discovers categories from CSV headers
-3. Update category dropdown in template if needed
+## Dependencies (pixi.toml)
 
-### Adjust score binning
-- Modify histogram binning logic in the data processing module (typically in `app.py` or a `data_utils.py` module)
-
-### Change visualization styling
-- Update CSS in `static/` for panel layouts and colors
-- Modify matplotlib figure settings in image rendering code
-
-## Testing Strategy
-
-- Use pytest for unit tests
-- Test data processing (CSV parsing, category filtering)
-- Test Flask route endpoints
-- Mock image data for visualization tests
-- Include integration tests for full workflow (upload CSV → view results)
-
-## Git Workflow
-
-- Commit frequently with descriptive messages
-- Use feature branches for new features
-- Ensure tests pass before merging to main
+Python 3.14+, Flask, pandas, numpy, pillow (generator only), pytest. Plotly loads from CDN
+in the browser — no server-side plotting dependency.
