@@ -1,3 +1,10 @@
-# SCM syntax highlighting & preventing 3-way merges
-pixi.lock merge=binary linguist-language=YAML linguist-generated=true -diff
+# Normalize line endings: store and check out text files as LF.
+# Forces LF even on Windows checkouts, so WSL and Windows git agree.
+* text=auto eol=lf
+
+# Shell scripts must always be LF (they run under bash/WSL).
+*.sh text eol=lf
+
+# Generated / binary files
 data/images/*.png filter=lfs diff=lfs merge=lfs -text
+pixi.lock merge=binary linguist-language=YAML linguist-generated=true -diff
