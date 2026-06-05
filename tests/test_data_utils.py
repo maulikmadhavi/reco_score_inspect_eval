@@ -89,3 +89,53 @@ def test_get_images_around_window_clamp():
     records = [{"score": 0.9, "image": "a"}, {"score": 0.1, "image": "b"}]
     result = data_utils.get_images_around(records, 0.9, window=100)
     assert len(result) == 2
+
+
+# ── Confusion matrix helpers ──────────────────────────────────────────────────
+
+
+def test_get_predictions_uses_pred_column():
+    df = make_df(image_path=["a", "b"], pred=["cat", "dog"],
+                 score_cat=[0.9, 0.1], score_dog=[0.1, 0.9])
+    preds = data_utils.get_predictions(df)
+    assert list(preds) == ["cat", "dog"]
+
+
+def test_get_predictions_argmax_fallback():
+    df = make_df(image_path=["a", "b"], score_cat=[0.9, 0.2], score_dog=[0.1, 0.8])
+    preds = data_utils.get_predictions(df)
+    assert list(preds) == ["cat", "dog"]
+
+
+def test_normalize_gt_empty_becomes_bg():
+    df = make_df(image_path=["a", "b", "c"], gt=["cat", "", None])
+    gts = data_utils.normalize_gt(df)
+    assert list(gts) == ["cat", "BG", "BG"]
+
+
+def test_get_confusion_matrix_counts_and_bg_row():
+    df = make_df(
+        image_path=["a", "b", "c", "d"],
+        gt=["cat", "cat", "dog", ""],          # last row is BG
+        score_cat=[0.9, 0.2, 0.1, 0.8],         # argmax: cat, dog, dog, cat
+        score_dog=[0.1, 0.8, 0.9, 0.2],
+    )
+    cm = data_utils.get_confusion_matrix(df, ["cat", "dog"])
+    assert cm["gt_labels"] == ["cat", "dog", "BG"]
+    assert cm["pred_labels"] == ["cat", "dog"]
+    # cat->cat=1, cat->dog=1 ; dog->dog=1 ; BG->cat=1
+    assert cm["counts"] == [[1, 1], [0, 1], [1, 0]]
+
+
+def test_get_cell_records_filter_and_sort_desc():
+    df = make_df(
+        image_path=["a", "b", "c"],
+        gt=["cat", "cat", "cat"],
+        score_cat=[0.1, 0.1, 0.9],
+        score_dog=[0.9, 0.8, 0.1],              # a,b predicted dog; c predicted cat
+    )
+    records = data_utils.get_cell_records(df, "cat", "dog")
+    # only a and b (gt=cat, pred=dog), sorted by dog score descending
+    assert [r["image"] for r in records] == ["a", "b"]
+    assert records[0]["score"] == pytest.approx(0.9)
+    assert records[1]["score"] == pytest.approx(0.8)
