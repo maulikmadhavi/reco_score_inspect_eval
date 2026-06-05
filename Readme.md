@@ -51,6 +51,51 @@ image_path,gt,score_kid_female,score_kid_male,score_adult_female,score_adult_mal
 /data/imgs/01065.png,adult_female,0.0001,0.0000,0.9998,0.0001
 ```
 
+## Architecture
+
+`app.py` owns HTTP wiring (CLI, routes, the `/image` allow-list guard); all analysis
+logic lives in the pure, unit-tested functions in `data_utils.py`. On startup the CSV is
+loaded once into module-level state; each `/api/*` endpoint then delegates to a
+`data_utils` helper. The confusion-matrix helpers share a small core
+(`normalize_gt`, `get_predictions`, `_gt_column`).
+
+```mermaid
+flowchart TD
+    START["🚀 __main__"] --> main["main()"]
+    main --> load["_load_data(csv)"]
+    load --> ldf["load_dataframe()"]
+    load --> disc["discover_categories()"]
+    main --> run["app.run()"]
+
+    run -. HTTP .-> idx["index() → /"]
+    run -. HTTP .-> conf["confusion() → /confusion"]
+    run -. HTTP .-> apiDist["api_distribution()"]
+    run -. HTTP .-> apiImg["api_images()"]
+    run -. HTTP .-> apiConf["api_confusion()"]
+    run -. HTTP .-> apiCell["api_confusion_cell()"]
+    run -. HTTP .-> img["serve_image()"]
+
+    apiDist --> getDist["get_distribution()"]
+    getDist --> getRec["get_category_records()"]
+    apiImg --> getRec
+    apiImg --> getAround["get_images_around()"]
+    apiConf --> getCM["get_confusion_matrix()"]
+    apiCell --> getCell["get_cell_records()"]
+
+    getCM --> norm["normalize_gt()"]
+    getCM --> pred["get_predictions()"]
+    getCell --> norm
+    getCell --> pred
+    getRec --> gtcol["_gt_column()"]
+    pred --> disc
+
+    style START fill:#2d6a4f,color:#fff
+```
+
+Solid arrows are direct calls; dotted `HTTP` arrows are routes the browser hits.
+`data_utils.py` has no Flask imports, so the whole data layer is testable in isolation
+(`tests/test_data_utils.py`).
+
 ## Setup
 
 This project uses [Pixi](https://pixi.sh) for dependency management. The environment
@@ -100,7 +145,8 @@ templates/confusion.html    Confusion-matrix view
 static/css/style.css        Styling (shared across views)
 static/js/app.js            Histogram, slider, image strip
 static/js/confusion.js      Heatmap + click-to-inspect cell images
-tests/test_data_utils.py    Unit tests for the data layer
+tests/test_data_utils.py    Unit tests for the data layer (16 tests)
+conftest.py                 Adds the project root to sys.path for tests
 ```
 
 ### Security note
