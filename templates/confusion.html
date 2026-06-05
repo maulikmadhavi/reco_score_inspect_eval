@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Confusion Matrix - IR Result Analysis</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside id="sidebar">
+    <h2>Views</h2>
+    <nav class="nav-links">
+      <a href="/">Score distribution</a>
+      <a href="/confusion" class="active">Confusion matrix</a>
+    </nav>
+  </aside>
+
+  <!-- Main panels -->
+  <div id="main">
+
+    <!-- Panel-1: confusion matrix -->
+    <div id="panel1">
+      <h3>Confusion matrix &mdash; click a cell to inspect its images</h3>
+      <div id="confusion"></div>
+    </div>
+
+    <!-- Panel-2: images for the selected cell -->
+    <div id="panel2">
+      <h3 id="cell-title">Selected cell</h3>
+      <div id="image-strip">
+        <span id="empty-msg">Click a matrix cell to view its images.</span>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/static/js/confusion.js"></script>
+</body>
+</html>
